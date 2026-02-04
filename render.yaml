@@ -2,18 +2,10 @@ services:
   - type: web
     name: backend-ans-intuitive
     env: python
-    buildCommand: pip install -r PARTE4/backend/requirements.txt
+    buildCommand: cd PARTE4/backend && pip install -r requirements.txt
     startCommand: cd PARTE4/backend && uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
-      - key: DB_HOST
+      - key: DATABASE_URL
         sync: false
-      - key: DB_USER
-        sync: false
-      - key: DB_PASSWORD
-        sync: false
-      - key: DB_NAME
-        sync: false
-      - key: DB_PORT
-        default: 5432
       - key: PYTHON_VERSION
         value: 3.11.0

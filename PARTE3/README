@@ -15,10 +15,8 @@ Sem isso o processamente demorava aproximadamente 40 minutos.
    Porque evita erros de arredondamento inerentes ao tipo FLOAT.
    E a escolha padrao para garantir precisao financeira.
 
-Datas e Periodos: Utilizado DATE para ano e trimestre.
-Porque o tipo DATE permite funcoes nativas de calendario e series temporais,
-sendo superior ao VARCHAR (que exige casts custosos)
-e ao TIMESTAMP (que consome mais espaco desnecessariamente para dados sem precisao de hora).
+Datas e Periodos: Utilizado VARCHAR para ano e trimestre.
+Porque o tipo DATE e TIMESTAMP exigem o formato padrão ISO (AAAA-MM-DD), o que causaria a rejeição dos dados de origem (que contém apenas os numerais dos trimestres).
 
 3. Tratamento de Inconsistencias na Importacao
    Durante o processo de importacao via comando COPY, as seguintes estrategias foram adotadas:

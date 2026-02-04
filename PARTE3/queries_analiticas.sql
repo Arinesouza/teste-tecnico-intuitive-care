@@ -14,8 +14,8 @@ CREATE TABLE despesas_consolidadas (
     id SERIAL PRIMARY KEY,
     registro_ans TEXT,
     razao_social_temp TEXT,
-    trimestre DATE,
-    ano DATE,
+    trimestre VARCHAR(10), 
+    ano VARCHAR(10),      
     valor_despesa DECIMAL(20, 2)
 );
 CREATE INDEX idx_ans_despesas ON despesas_consolidadas(registro_ans);
@@ -27,7 +27,6 @@ CREATE TABLE despesas_agregadas (
 \copy operadoras_cadastrais FROM '../PARTE2/Relatorio_cadop.csv' WITH (FORMAT csv, DELIMITER ';', HEADER true, QUOTE '"', ENCODING 'LATIN1');
 \copy despesas_consolidadas(registro_ans, razao_social_temp, trimestre, ano, valor_despesa) FROM '../PARTE1/output/consolidado_despesas.csv' WITH (FORMAT csv, DELIMITER ',', HEADER true);
 \copy despesas_agregadas FROM '../PARTE2/output/despesas_agregadas.csv' WITH (FORMAT csv, DELIMITER ';', HEADER true);
-
 
 SELECT '--- RANKING DESPESAS POR UF ---' AS status;
 SELECT uf,
@@ -43,8 +42,8 @@ SELECT '--- TOP 5 CRESCIMENTO PERCENTUAL ---' AS status;
 WITH calculo_tri AS (
     SELECT 
         registro_ans,
-        SUM(CASE WHEN ano = 2025 AND trimestre = 1 THEN valor_despesa ELSE 0 END) as v1,
-        SUM(CASE WHEN ano = 2025 AND trimestre = 2 THEN valor_despesa ELSE 0 END) as v2
+        SUM(CASE WHEN CAST(ano AS INTEGER) = 2025 AND CAST(trimestre AS INTEGER) = 1 THEN valor_despesa ELSE 0 END) as v1,
+        SUM(CASE WHEN CAST(ano AS INTEGER) = 2025 AND CAST(trimestre AS INTEGER) = 2 THEN valor_despesa ELSE 0 END) as v2
     FROM despesas_consolidadas
     GROUP BY registro_ans
 )
