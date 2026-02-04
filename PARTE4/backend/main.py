@@ -13,7 +13,9 @@ load_dotenv()
 IF_RENDER = os.getenv("RENDER") == "True"
 
 if IF_RENDER:
-    DATABASE_URL = "sqlite:///./database.db"
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    db_path = os.path.join(current_dir, "database.db")
+    DATABASE_URL = f"sqlite:///{db_path}"
 else:
     DB_USER = os.getenv("DB_USER")
     DB_PASSWORD = os.getenv("DB_PASSWORD")
@@ -124,13 +126,15 @@ def despesas_por_uf(db: Session = Depends(get_db)):
         WHERE uf IS NOT NULL AND uf <> '' AND uf <> 'N/I' 
         GROUP BY uf ORDER BY valor DESC LIMIT 10
     """)
-    res = db.execute(query).mappings().all()
-    return [sanitizar_dados({"label": row.label, "valor": float(row.valor)}) for row in res]
+    try:
+        res = db.execute(query).mappings().all()
+        return [sanitizar_dados({"label": row.label, "valor": float(row.valor or 0)}) for row in res]
+    except Exception as e:
+        print(f"DEBUG Erro Query Analitica: {e}")
+        return []
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 frontend_path = os.path.join(current_dir, "..", "frontend", "dist")
-
-print(f"DEBUG: Procurando frontend em: {frontend_path}")
 
 if os.path.exists(frontend_path):
     app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="assets")
@@ -140,9 +144,7 @@ if os.path.exists(frontend_path):
         if full_path.startswith("api") or full_path.startswith("docs"):
             return {"detail": "Not Found"}
         return FileResponse(os.path.join(frontend_path, "index.html"))
-else:
-    print("ERRO: Pasta frontend/dist nao encontrada!")
-    
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
