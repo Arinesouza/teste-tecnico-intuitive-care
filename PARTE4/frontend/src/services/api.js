@@ -1,5 +1,5 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: "http://localhost:8000/api",
-});
+// No seu service de API do Frontend
+  baseURL: window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : '/api'});

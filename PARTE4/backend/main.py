@@ -3,15 +3,26 @@ import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, Depends, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, Session
 
 load_dotenv()
 
+
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL não configurada")
+    DB_USER = os.getenv("DB_USER", "postgres")
+    DB_PASSWORD = os.getenv("DB_PASSWORD", "1234")
+    DB_HOST = os.getenv("DB_HOST", "localhost")
+    DB_PORT = os.getenv("DB_PORT", "5432")
+    DB_NAME = os.getenv("DB_NAME", "teste_ans")
+    DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 engine = create_engine(DATABASE_URL, echo=False)
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
@@ -32,8 +43,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# --- UTILITÁRIOS ---
 def consertar_acentuacao(texto):
-    """Detecta e corrige caracteres especiais corrompidos (Mojibake)."""
     if not texto:
         return texto
     try:
@@ -42,7 +53,6 @@ def consertar_acentuacao(texto):
         return str(texto).upper().strip()
 
 def sanitizar_dados(obj):
-    """Aplica a correção de acentuação nos campos de texto do dicionário."""
     if not obj:
         return obj
     d = dict(obj)
@@ -52,6 +62,7 @@ def sanitizar_dados(obj):
             d[campo] = consertar_acentuacao(d[campo])
     return d
 
+# --- ROTAS API ---
 @app.get("/api/operadoras")
 def listar_operadoras(
     page: int = Query(1, ge=1),
@@ -59,7 +70,6 @@ def listar_operadoras(
     search: str | None = None,
     db: Session = Depends(get_db),
 ):
-    """Lista operadoras com paginação e busca."""
     offset = (page - 1) * limit
     params = {"limit": limit, "offset": offset}
     where = ""
@@ -87,7 +97,6 @@ def listar_operadoras(
 
 @app.get("/api/operadoras/{cnpj}")
 def detalhe_operadora(cnpj: str, db: Session = Depends(get_db)):
-    """Retorna detalhes de uma operadora específica."""
     cnpj_limpo = "".join(filter(str.isdigit, cnpj)).zfill(14)
     row = db.execute(
         text("SELECT cnpj, registro_ans, razao_social, modalidade, c11 AS uf FROM operadoras_cadastrais WHERE cnpj = :cnpj"),
@@ -100,7 +109,6 @@ def detalhe_operadora(cnpj: str, db: Session = Depends(get_db)):
 
 @app.get("/api/operadoras/{cnpj}/despesas")
 def despesas_operadora(cnpj: str, db: Session = Depends(get_db)):
-    """Retorna histórico de despesas consolidado por período."""
     cnpj_limpo = "".join(filter(str.isdigit, cnpj)).zfill(14)
     registro = db.execute(
         text("SELECT registro_ans FROM operadoras_cadastrais WHERE cnpj = :cnpj"), 
@@ -125,15 +133,31 @@ def despesas_operadora(cnpj: str, db: Session = Depends(get_db)):
 
 @app.get("/api/estatisticas/despesas_por_uf")
 def despesas_por_uf(db: Session = Depends(get_db)):
-    """Estatísticas agregadas para o gráfico (Top 10 UFs)."""
     query = text("""
         SELECT uf AS label, SUM(CAST(total_despesas AS DECIMAL)) AS valor
         FROM despesas_agregadas 
         WHERE uf IS NOT NULL AND uf <> '' AND uf <> 'N/I'
         GROUP BY uf ORDER BY valor DESC LIMIT 10
     """)
-    res = db.execute(query).mappings().all()
-    return [sanitizar_dados({"label": row.label, "valor": float(row.valor)}) for row in res]
+    try:
+        res = db.execute(query).mappings().all()
+        return [sanitizar_dados({"label": row.label, "valor": float(row.valor or 0)}) for row in res]
+    except Exception as e:
+        print(f"Erro na query analítica: {e}")
+        return []
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+frontend_path = os.path.join(current_dir, "..", "frontend", "dist")
+
+if os.path.exists(frontend_path):
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="assets")
+    
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        if full_path.startswith(("api", "docs")):
+            return {"detail": "Not Found"}
+        return FileResponse(os.path.join(frontend_path, "index.html"))
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
