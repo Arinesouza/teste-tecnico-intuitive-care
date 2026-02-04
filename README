@@ -1,0 +1,92 @@
+Intuitive Care - Desafio Técnico ANS
+
+Este repositório contém a solução para o desafio técnico da Intuitive Care, focado no processamento de dados da ANS e desenvolvimento de uma plataforma Full Stack.
+Ele se divide em 4 sub-pastas seguindo a ordem de testes informadas:
+
+1. TESTE DE INTEGRAÇÃO COM API PÚBLICA:
+   Como executar no terminal:
+
+   1. Navegue até `PARTE1`:
+      > cd PARTE1
+   2. Executando arquivo python:
+      python processar_dados.py
+      Assim serão gerados os arquivos de saída na pasta output
+
+2. TESTE DE TRANSFORMAÇÃO E VALIDAÇÃO DE DADOS:
+   Como executar no terminal:
+
+   1. Navegue até `PARTE2`:
+      > cd PARTE2
+   2. Executando arquivo python:
+      python transformacao.py
+      Assim será gerado os arquivo de saída na pasta output
+
+3. TESTE DE BANCO DE DADOS E ANÁLISE:
+   Como executar pelo terminal estando na pasta raiz:
+
+   > cd PARTE3
+
+   1. Entrar no PostgreSQL pelo terminal
+
+      > psql -U postgres
+      > (Ele vai pedir a senha que você criou quando instalou o Postgres).
+
+   2. Criar o banco:
+
+      > CREATE DATABASE teste_ans;
+
+   3. Rodar o arquivo no banco que você criou
+      Agora que o banco existe, você manda o VS Code empurrar o arquivo .sql para dentro dele:
+      > psql -U postgres -d teste_ans -f queries_analiticas.sql
+
+4. TESTE DE API E INTERFACE WEB
+
+Backend (FastAPI)
+
+1. Navegue até `PARTE4/backend`.
+   > cd PARTE4/backend
+2. Instale as dependências:
+   > pip install -r requirements.txt.
+3. Configure o arquivo `.env` com seus dados de banco de dados:
+   exemplo:
+   DB_USER=seu_db_user
+   DB_PASSWORD=sua_senha
+   DB_HOST=seu_localhost
+   DB_PORT=sua_porta
+   DB_NAME=nome_db
+
+4. Inicie o servidor:
+   > python main.py`.
+
+Frontend (Vue.js 3)
+
+1. Navegue até`PARTE4/frontend`:
+   > cd PARTE4/frontend
+2. Instale as dependências:
+   > npm install
+3. Inicie a aplicação:
+   > npm run dev`
+
+OBS: cada subpasta tem seu README justificando as escolhas técnicas.
+
+DIFERENCIAIS IMPLEMENTADOS
+
+Testes Automatizados
+Implementação de testes unitários e de integração utilizando Pytest.
+Cobertura de rotas da API e lógica de tratamento de dados (acentuação).
+Para executar:
+
+> cd PARTE4/backend && pytest.
+> Lembrando que precisa ter a depedência de pytest instalada e isso está no Requeriments.txt
+
+Performance e Pensamento Crítico:
+Tabelas Agregadas: Otimização de consultas de estatísticas utilizando tabelas pré-processadas, garantindo respostas em milissegundos.
+Tratamento de Mojibake:Algoritmo customizado para correção de caracteres corrompidos originados dos CSVs da ANS.
+
+Nuvem e Infraestrutura (Render):
+Uso de `render.yaml` para configuração de deploy contínuo.
+O projeto está preparado para rodar em nuvem, utilizando variáveis de ambiente para total desacoplamento de credenciais.
+
+Versionamento:
+Uso rigoroso de `.gitignore` para proteção de dados sensíveis.
+Documentação de ambiente via `.env.example`.

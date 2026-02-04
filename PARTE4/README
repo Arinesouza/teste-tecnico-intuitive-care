@@ -1,12 +1,12 @@
 TESTE DE API E INTERFACE WEB
 
 1. BACKEND
-1.1 Escolha do Framework: FastAPI
-Porque diferente do Flask, o FastAPI é nativamente assíncrono, permitindo maior performance no processamento de grandes volumes de dados. 
-A tipagem estática e a geração automática de documentação Swagger facilitam a manutenção a longo prazo.
+   1.1 Escolha do Framework: FastAPI
+   Porque diferente do Flask, o FastAPI é nativamente assíncrono, permitindo maior performance no processamento de grandes volumes de dados.
+   A tipagem estática e a geração automática de documentação Swagger facilitam a manutenção a longo prazo.
 
 1.2 Estratégia de Paginação: Offset-based
-Considerando que a base de dados da ANS é majoritariamente histórica e não sofre milhares de inserções por segundo, 
+Considerando que a base de dados da ANS é majoritariamente histórica e não sofre milhares de inserções por segundo,
 o offset simplifica a navegação por páginas numeradas no frontend, oferecendo uma UX melhor para o usuário sem comprometer a performance.
 
 1.3 Cache vs Queries Diretas: Pré-calcular e Armazenar
@@ -15,28 +15,25 @@ Para a rota de estatísticas, os dados são agregados e salvos na tabela despesa
 1.4 Estrutura de Resposta da API: Dados + Metadados
 Retornar {data: [...], total: 100, page: 1, limit: 10} é fundamental para o frontend saber o tamanho total da base e renderizar corretamente os controles de paginação.
 
-1.5  Segurança e Boas Práticas: 
-Implementei o gerenciamento de credenciais via variáveis de ambiente (.env). 
-Isso evita a exposição de dados sensíveis em repositórios públicos como por exemplo, o github
+1.5 Segurança e Boas Práticas:
+Implementei o gerenciamento de credenciais via variáveis de ambiente (.env).
+Isso evita a exposição de dados sensíveis em repositórios públicos como por exemplo, o github.
 
 1.6 Como executar:
-    Na pasta raiz no terminal:
-    >cd PARTE4/backend
-    >pip install -r requirements.txt (arquivo onde estão as dependências necessárias para o servidor funcionar)
-    >python main.py
+Na pasta raiz no terminal: >cd PARTE4/backend >pip install -r requirements.txt (arquivo onde estão as dependências necessárias para o servidor funcionar) >python main.py
 
 2. FRONTEND
 
 2.1 Estratégia de Busca/Filtro: Busca no Servidor
-Porque carregar milhares de operadoras para filtrar no navegador (cliente) causaria lentidão e alto consumo de memória. 
+Porque carregar milhares de operadoras para filtrar no navegador (cliente) causaria lentidão e alto consumo de memória.
 A busca no servidor via queries SQL otimizadas mantém a interface leve.
 
 2.2 Gerenciamento de Estado: Composables (Vue 3)
-Para uma aplicação de fluxo direto (Dashboard -> Lista -> Detalhes), 
+Para uma aplicação de fluxo direto (Dashboard -> Lista -> Detalhes),
 o uso de Composables nativos é mais eficiente e menos complexo que o Pinia, mantendo a reatividade e a organização do código.
 
 2.3 Performance da Tabela: Renderização Limitada
-A tabela exibe apenas 12 registros por vez. 
+A tabela exibe apenas 12 registros por vez.
 Isso minimiza o número de elementos no DOM, garantindo que a renderização seja fluida mesmo em dispositivos com menor poder de processamento.
 
 2.4 Tratamento de Erros e Loading
@@ -45,28 +42,24 @@ Rede/API: Utilizo blocos try/catch para capturar falhas e exibir mensagens de er
 
 Loading: Estados reativos (loading.value) controlam a exibição de feedbacks visuais durante as requisições.
 
-Dados Vazios: Implementei verificações de array vazio para exibir avisos amigáveis, por exemplo "Nenhuma despesa encontrada", 
+Dados Vazios: Implementei verificações de array vazio para exibir avisos amigáveis, por exemplo "Nenhuma despesa encontrada",
 evitando que o usuário visualize tabelas em branco.
 
 2.5 Como executar:
-    Na pasta raiz no terminal:
-    >cd PARTE4/frontend
-    >npm install (instala as dependências)
-    >npm run dev
+Na pasta raiz no terminal: >cd PARTE4/frontend >npm install (instala as dependências) >npm run dev
 O terminal vai exibir um endereço que é só acessar no navegador
 
 3. Documentação da API (Postman)
-A coleção do Postman está disponível no arquivo Teste ANS - Operadoras.postman_collection.json dentro da pasta backend
+   A coleção do Postman está disponível no arquivo Teste ANS - Operadoras.postman_collection.json dentro da pasta backend
 
 Exemplo de Requisição: Detalhe da Operadora
 GET /api/operadoras/15011651000154
 
 Resposta esperada:
 {
-  "cnpj": "15011651000154",
-  "registro_ans": "421715",
-  "razao_social": "BRADESCO SAÚDE - OPERADORA DE PLANOS S/A",
-  "modalidade": "MEDICINA DE GRUPO",
-  "uf": "SP"
+"cnpj": "15011651000154",
+"registro_ans": "421715",
+"razao_social": "BRADESCO SAÚDE - OPERADORA DE PLANOS S/A",
+"modalidade": "MEDICINA DE GRUPO",
+"uf": "SP"
 }
-
