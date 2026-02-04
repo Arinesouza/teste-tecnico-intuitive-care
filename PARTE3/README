@@ -1,0 +1,66 @@
+TESTE DE BANCO DE DADOS E ANÁLISE
+
+1. Normalizacao e Estrutura (Item 3.2)
+   Abordagem Escolhida: Tabelas Normalizadas.
+
+Por causa do volume de dados, visto que dados de despesas sao transacionais e crescem rapidamente.
+Separar os dados cadastrais (estaticos) evita redundancia massiva de textos.
+
+Performance: A criacao de um Indice B-Tree na coluna registro_ans das tabelas de despesas otimiza a performance dos JOINs,
+garantindo que queries analiticas permanecam rapidas mesmo com grande volume de registros.
+Sem isso o processamente demorava aproximadamente 40 minutos.
+
+2. Tipos de Dados:
+   Valores Monetarios: Utilizado DECIMAL.
+   Porque evita erros de arredondamento inerentes ao tipo FLOAT.
+   E a escolha padrao para garantir precisao financeira.
+
+Datas e Periodos: Utilizado DATE para ano e trimestre.
+Porque o tipo DATE permite funcoes nativas de calendario e series temporais,
+sendo superior ao VARCHAR (que exige casts custosos)
+e ao TIMESTAMP (que consome mais espaco desnecessariamente para dados sem precisao de hora).
+
+3. Tratamento de Inconsistencias na Importacao
+   Durante o processo de importacao via comando COPY, as seguintes estrategias foram adotadas:
+
+Valores NULL: Campos criticos de ligacao (Chaves Primarias) nao aceitam nulos.
+Registros inconsistentes em tabelas agregadas foram filtrados via clausula WHERE nas queries finais para nao poluir os calculos de media.
+
+Strings em campos numericos: Foi utilizada a conversao explicita CAST durante a analise.
+Isso permite que a importacao nao seja interrompida por caracteres invalidos, tratando o dado no momento da geracao do relatorio.
+
+Encoding: O arquivo Relatorio_cadop.csv foi importado explicitamente como LATIN1 (padrao dos dados da ANS) e
+convertido automaticamente para o UTF8 do banco de dados durante a carga.
+Apesar de que, executando através do CMD, as palavras com caracteres especiais ficaram com bug
+Mas os dados estão armazenados corretamente em UTF-8 no PostgreSQL.
+
+4. Respostas as Queries Analiticas
+   Query 1: Maior Crescimento Percentual
+   Desafio (Dados faltantes): Operadoras que nao possuem dados em todos os trimestres sao tratadas via NULLIF no denominador.
+   Se nao ha despesa no primeiro trimestre analisado, a operadora e ignorada pelo calculo, evitando erros de divisao por zero e distorcoes no ranking.
+
+   Query 2: Distribuicao por UF
+   Desafio Adicional: A query realiza o calculo da despesa total e, simultaneamente, a media de despesas por operadora em cada UF,
+   agrupando os resultados e ordenando pelos estados com maior volume financeiro.
+
+   Query 3: Operadoras Acima da Media
+   Abordagem Escolhida: Utilizacao de CTEs (Common Table Expressions).
+   Porque sta abordagem foi escolhida pela excelente legibilidade e manutenibilidade.
+   O uso de CTEs isola a logica do calculo da media global, permitindo que a query principal seja concisa e performante, facilitando futuras alteracoes no criterio de "media geral".
+
+5. Como executar pelo terminal estando na pasta raiz:
+
+   > cd PARTE3
+
+   1. Entrar no PostgreSQL pelo terminal
+
+      > psql -U postgres
+      > (Ele vai pedir a senha que você criou quando instalou o Postgres).
+
+   2. Criar o banco:
+
+      > CREATE DATABASE teste_ans;
+
+   3. Rodar o arquivo no banco que você criou
+      Agora que o banco existe, você manda o VS Code empurrar o arquivo .sql para dentro dele:
+      > psql -U postgres -d teste_ans -f queries_analiticas.sql

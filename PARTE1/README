@@ -1,0 +1,42 @@
+TESTE DE INTEGRAÇÃO COM API PÚBLICA
+
+1. Processamento de Diretórios:
+Os dados foram processados diretório por diretório utilizando a biblioteca pathlib. 
+Esta abordagem garante a associação correta entre o nome da pasta (que atua como metadado de Trimestre/Ano) e o conteúdo dos arquivos, 
+permitindo que a solução seja resiliente a variações na estrutura de pastas da API.
+
+2. Trade-off: Processamento de Dados
+Utilizei Processamento Incremental (Arquivo por Arquivo).
+Porque esta estratégia reduz o consumo de memória RAM, permitindo que a solução escale para volumes maiores de dados sem comprometer a estabilidade do sistema.
+
+3. Leitura e Suporte a Múltiplos Formatos
+A solução foi desenvolvida para identificar automaticamente a estrutura dos arquivos. 
+Embora os arquivos atuais estejam em CSV, houve tratamento para:
+
+Separador: ; 
+Decimal: ,
+Codificação: UTF-8-SIG 
+
+4. Normalização Estrutural e Filtro Semântico
+Os arquivos de origem não apresentam a estrutura final exigida. Foi realizada a seguinte normalização:
+
+Filtro de Despesas: Identificação automática de despesas com Eventos/Sinistros através do filtro no campo CD_CONTA_CONTABIL (contas iniciadas por 411).
+CNPJ: Como o CNPJ de 14 dígitos não está presente no balancete, utilizou-se o campo REG_ANS como identificador único disponível.
+RazaoSocial: Campo inexistente nos dados brutos, preenchido como NA para enriquecimento posterior na Parte 2.
+ValorDespesas: Mapeado a partir do campo VL_SALDO_FINAL, com conversão explícita para tipo numérico (float).
+
+5. Durante a consolidação, as seguintes situações foram tratadas:
+
+5.1 Valores Zerados ou Negativos
+Ocorreu a remoção de valores <= 0 .
+Porque Para o desafio de análise de "Despesas com Sinistros", valores zerados não possuem relevância estatística e valores negativos (estornos contábeis) podem distorcer a média e o desvio padrão na fase de agregação. Portanto, optou-se por considerar apenas despesas brutas positivas.
+
+5.2 Duplicidade
+Foi feito filtro por nível de detalhamento para evitar a duplicidade de valores, a solução filtra os dados pelo maior nível de detalhamento disponível, garantindo a integridade do montante final.
+
+5.3 Ausência de CNPJ e Razão Social
+O arquivo original das Demonstrações Contábeis da ANS é um documento financeiro por operadora, não cadastral. A ausência de CNPJ/Razão Social foi tratada como uma limitação de origem e documentada, garantindo que o enriquecimento ocorra na Parte 2 através do cruzamento com o Relatório CADOP.
+
+6. Como executar:
+  >cd PARTE1
+  >python processar_dados.py

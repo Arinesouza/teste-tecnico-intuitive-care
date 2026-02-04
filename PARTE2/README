@@ -1,0 +1,34 @@
+TESTE DE TRANSFORMAÇÃO E VALIDAÇÃO DE DADOS
+
+1. Validação de Dados e CNPJ
+Implementei uma função de validação baseada no algoritmo de verificação de dígitos para garantir a integridade dos CNPJs extraídos do cadastro oficial.
+
+2. Tratamento de Inválidos:
+Os registros com CNPJs inválidos ou não encontrados no cadastro foram mantidos na agregação final com a flag "N/I" (Não Informado).
+Porque em um contexto de auditoria de despesas, a exclusão de dados financeiros por falha cadastral poderia ocultar passivos reais.
+Priorizei a integridade dos valores financeiros em detrimento da perfeição cadastral.
+
+3. No arquivo 'Relatorio_cadop.csv', foram identificados CNPJs que aparecem múltiplas vezes devido a históricos de endereços ou alterações cadastrais.
+Então utilizei a estratégia de deduplicação 'drop_duplicates(keep='last')' na tabela dimensional (Cadastro) antes do Join.
+Isso evita o efeito de "explosão de linhas", que duplicaria indevidamente os valores de despesas no resultado final.
+
+4. Trade-off de Processamento:
+Utilizei Join em Memória.
+Porque o volume de dados cadastrais é pequeno, permitindo que o cruzamento ocorra instantaneamente
+memória RAM, sendo a solução mais performática para este cenário.
+
+5. Agregação e Análise Estatística:
+Os dados foram agrupados por 'Razão Social' e 'UF', extraindo as seguintes métricas:
+Total de Despesas: Volume financeiro total por operadora/região.
+Média Trimestral: Comportamento médio do custo assistencial.
+Desvio Padrão: Identificação de operadoras com alta volatilidade assistencial. Valores nulos (operadoras com apenas um registro) foram convertidos para 0 para garantir a consistência do relatório.
+
+6. Ordenação dos dados:
+Coloquei a lista em ordem, do maior valor para o menor.
+Porque fica muito mais fácil de ler e já mostra de cara quem são as empresas que mais gastaram com despesas médicas no período.
+Em vez de procurar na lista toda, quem abre o arquivo já vê o ranking pronto, com os maiores gastos logo no topo.
+
+7. Como executar:
+   Na pasta raiz pelo terminal:
+   > cd PARTE2
+   > python transformacao.py
