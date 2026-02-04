@@ -127,15 +127,22 @@ def despesas_por_uf(db: Session = Depends(get_db)):
     res = db.execute(query).mappings().all()
     return [sanitizar_dados({"label": row.label, "valor": float(row.valor)}) for row in res]
 
-frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+frontend_path = os.path.join(current_dir, "..", "frontend", "dist")
+
+print(f"DEBUG: Procurando frontend em: {frontend_path}")
+
 if os.path.exists(frontend_path):
     app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="assets")
+    
     @app.get("/{full_path:path}")
     async def serve_frontend(full_path: str):
         if full_path.startswith("api") or full_path.startswith("docs"):
             return {"detail": "Not Found"}
         return FileResponse(os.path.join(frontend_path, "index.html"))
-
+else:
+    print("ERRO: Pasta frontend/dist nao encontrada!")
+    
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
