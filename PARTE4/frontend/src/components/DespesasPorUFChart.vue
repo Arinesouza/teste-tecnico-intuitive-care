@@ -14,7 +14,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { api } from '../services/api';
+import  api  from '../services/api';
 
 const loading = ref(true);
 const error = ref(false);

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
-import { api } from "../services/api";
+import  api  from "../services/api";
 
 const router = useRouter();
 const operadoras = ref([]);

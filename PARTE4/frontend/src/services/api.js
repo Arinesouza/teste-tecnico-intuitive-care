@@ -1,5 +1,9 @@
-import axios from "axios";
+import axios from 'axios';
 
-export const api = axios.create({
-// No seu service de API do Frontend
-  baseURL: window.location.hostname === 'localhost' ? 'http://localhost:8000/api' : '/api'});
+const isLocalhost = window.location.hostname === 'localhost';
+
+const api = axios.create({
+  baseURL: isLocalhost ? 'http://localhost:8000/api' : '/api',
+});
+
+export default api;
