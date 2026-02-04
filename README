@@ -1,7 +1,6 @@
 Intuitive Care - Desafio Técnico ANS
 
-Este repositório contém a solução para o desafio técnico da Intuitive Care, focado no processamento de dados da ANS e desenvolvimento de uma plataforma Full Stack.
-Ele se divide em 4 sub-pastas seguindo a ordem de testes informadas:
+O projeto se divide em 4 etapas, seguindo a ordem dos testes solicitados:
 
 1. TESTE DE INTEGRAÇÃO COM API PÚBLICA:
    Como executar no terminal:
