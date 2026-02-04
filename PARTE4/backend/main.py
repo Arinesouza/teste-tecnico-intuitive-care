@@ -10,15 +10,22 @@ from sqlalchemy.orm import sessionmaker, Session
 
 load_dotenv()
 
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT")
-DB_NAME = os.getenv("DB_NAME")
+IF_RENDER = os.getenv("RENDER") == "True"
 
-DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+if IF_RENDER:
+    DATABASE_URL = "sqlite:///./database.db"
+else:
+    DB_USER = os.getenv("DB_USER")
+    DB_PASSWORD = os.getenv("DB_PASSWORD")
+    DB_HOST = os.getenv("DB_HOST")
+    DB_PORT = os.getenv("DB_PORT")
+    DB_NAME = os.getenv("DB_NAME")
+    DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
-engine = create_engine(DATABASE_URL, echo=False)
+engine = create_engine(
+    DATABASE_URL, 
+    connect_args={"check_same_thread": False} if "sqlite" in DATABASE_URL else {}
+)
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 
 def get_db():
@@ -66,13 +73,16 @@ def listar_operadoras(
     params = {"limit": limit, "offset": offset}
     where = ""
     if search:
-        where = "WHERE cnpj ILIKE :search OR razao_social ILIKE :search"
+        op_like = "LIKE" if IF_RENDER else "ILIKE"
+        where = f"WHERE cnpj {op_like} :search OR razao_social {op_like} :search"
         params["search"] = f"%{search}%"
+    
     total = db.execute(text(f"SELECT COUNT(*) FROM operadoras_cadastrais {where}"), params).scalar()
     rows = db.execute(
         text(f"SELECT cnpj, registro_ans, razao_social, modalidade, c11 AS uf FROM operadoras_cadastrais {where} ORDER BY razao_social LIMIT :limit OFFSET :offset"),
         params
     ).mappings().all()
+    
     return {
         "data": [sanitizar_dados(row) for row in rows],
         "total": total,
@@ -108,11 +118,16 @@ def despesas_operadora(cnpj: str, db: Session = Depends(get_db)):
 
 @app.get("/api/estatisticas/despesas_por_uf")
 def despesas_por_uf(db: Session = Depends(get_db)):
-    query = text("SELECT uf AS label, SUM(CAST(total_despesas AS DECIMAL)) AS valor FROM despesas_agregadas WHERE uf IS NOT NULL AND uf <> '' AND uf <> 'N/I' GROUP BY uf ORDER BY valor DESC LIMIT 10")
+    query = text("""
+        SELECT uf AS label, SUM(CAST(total_despesas AS NUMERIC)) AS valor 
+        FROM despesas_agregadas 
+        WHERE uf IS NOT NULL AND uf <> '' AND uf <> 'N/I' 
+        GROUP BY uf ORDER BY valor DESC LIMIT 10
+    """)
     res = db.execute(query).mappings().all()
     return [sanitizar_dados({"label": row.label, "valor": float(row.valor)}) for row in res]
 
-frontend_path = os.path.join(os.path.dirname(__file__), "../frontend/dist")
+frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist"))
 if os.path.exists(frontend_path):
     app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="assets")
     @app.get("/{full_path:path}")
