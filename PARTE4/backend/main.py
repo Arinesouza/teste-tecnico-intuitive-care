@@ -47,30 +47,22 @@ app.add_middleware(
 )
 
 def consertar_acentuacao(texto):
-    if not texto:
-        return texto
+    if not texto: return texto
     try:
         return texto.encode('latin-1').decode('utf-8').upper().strip()
-    except (UnicodeEncodeError, UnicodeDecodeError):
+    except:
         return str(texto).upper().strip()
 
 def sanitizar_dados(obj):
-    if not obj:
-        return obj
+    if not obj: return obj
     d = dict(obj)
-    campos_texto = ["razao_social", "modalidade", "uf", "label"]
-    for campo in campos_texto:
+    for campo in ["razao_social", "modalidade", "uf", "label"]:
         if campo in d and d[campo]:
             d[campo] = consertar_acentuacao(d[campo])
     return d
 
 @app.get("/api/operadoras")
-def listar_operadoras(
-    page: int = Query(1, ge=1),
-    limit: int = Query(12, ge=1, le=100),
-    search: str | None = None,
-    db: Session = Depends(get_db),
-):
+def listar_operadoras(page: int = Query(1, ge=1), limit: int = Query(12, ge=1), search: str = None, db: Session = Depends(get_db)):
     offset = (page - 1) * limit
     params = {"limit": limit, "offset": offset}
     where = ""
@@ -85,38 +77,7 @@ def listar_operadoras(
         params
     ).mappings().all()
     
-    return {
-        "data": [sanitizar_dados(row) for row in rows],
-        "total": total,
-        "page": page,
-        "limit": limit
-    }
-
-@app.get("/api/operadoras/{cnpj}")
-def detalhe_operadora(cnpj: str, db: Session = Depends(get_db)):
-    cnpj_limpo = "".join(filter(str.isdigit, cnpj)).zfill(14)
-    row = db.execute(
-        text("SELECT cnpj, registro_ans, razao_social, modalidade, c11 AS uf FROM operadoras_cadastrais WHERE cnpj = :cnpj"),
-        {"cnpj": cnpj_limpo}
-    ).mappings().first()
-    if not row:
-        raise HTTPException(status_code=404, detail="Operadora não encontrada")
-    return sanitizar_dados(row)
-
-@app.get("/api/operadoras/{cnpj}/despesas")
-def despesas_operadora(cnpj: str, db: Session = Depends(get_db)):
-    cnpj_limpo = "".join(filter(str.isdigit, cnpj)).zfill(14)
-    registro = db.execute(
-        text("SELECT registro_ans FROM operadoras_cadastrais WHERE cnpj = :cnpj"), 
-        {"cnpj": cnpj_limpo}
-    ).scalar()
-    if not registro:
-        return []
-    result = db.execute(
-        text("SELECT ano, trimestre, SUM(valor_despesa) AS valor_despesa FROM despesas_consolidadas WHERE registro_ans = :registro GROUP BY ano, trimestre ORDER BY ano DESC, trimestre DESC"), 
-        {"registro": registro}
-    ).mappings().all()
-    return [dict(row) for row in result]
+    return {"data": [sanitizar_dados(row) for row in rows], "total": total, "page": page, "limit": limit}
 
 @app.get("/api/estatisticas/despesas_por_uf")
 def despesas_por_uf(db: Session = Depends(get_db)):
@@ -130,7 +91,7 @@ def despesas_por_uf(db: Session = Depends(get_db)):
         res = db.execute(query).mappings().all()
         return [sanitizar_dados({"label": row.label, "valor": float(row.valor or 0)}) for row in res]
     except Exception as e:
-        print(f"DEBUG Erro Query Analitica: {e}")
+        print(f"Erro Analitico: {e}")
         return []
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -138,13 +99,11 @@ frontend_path = os.path.join(current_dir, "..", "frontend", "dist")
 
 if os.path.exists(frontend_path):
     app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="assets")
-    
     @app.get("/{full_path:path}")
     async def serve_frontend(full_path: str):
-        if full_path.startswith("api") or full_path.startswith("docs"):
-            return {"detail": "Not Found"}
+        if full_path.startswith(("api", "docs")): return {"detail": "Not Found"}
         return FileResponse(os.path.join(frontend_path, "index.html"))
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
