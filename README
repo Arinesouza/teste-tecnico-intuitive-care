@@ -84,9 +84,10 @@ Tabelas Agregadas: Otimização de consultas de estatísticas utilizando tabelas
 Tratamento de Mojibake:Algoritmo customizado para correção de caracteres corrompidos originados dos CSVs da ANS.
 
 Nuvem e Infraestrutura (Render):
-Uso de `render.yaml` para configuração de deploy contínuo.
-O projeto está preparado para rodar em nuvem, utilizando variáveis de ambiente para total desacoplamento de credenciais.
+O projeto está configurado para o Render ler o meu GitHub.
+Sempre que eu envio um código novo, ele faz o "build" e coloca a versão atualizada no ar automaticamente.
+O projeto está publicado e pode ser acessado através do link abaixo:
+https://teste-tecnico-intuitive-care.onrender.com
 
-Versionamento:
 Uso rigoroso de `.gitignore` para proteção de dados sensíveis.
 Documentação de ambiente via `.env.example`.
